@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import os
+import argparse
 
 def get_youtube_music_info(url):
     """
@@ -50,9 +51,21 @@ def get_youtube_music_info(url):
 
 # Main execution block
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--format", help="Specify output format", choices=["txt", "csv"], default="txt")
+    parser.add_argument("-o", "--output", help="Specify output file name", default="urls_results")
+
+    args = parser.parse_args()
+    output_format = args.format
+
+    if output_format == "csv":
+        output_file = args.output + ".csv"
+    else:
+        output_file = args.output + ".txt"
+
     script_dir = os.path.dirname(os.path.abspath(__file__))
     input_file_path = os.path.join(script_dir, 'urls.txt')
-    output_file_path = os.path.join(script_dir, 'urls_results.txt') # Define output file path
+    output_file_path = os.path.join(script_dir, output_file) # Define output file path
 
     print(f"Looking for URL file at: {input_file_path}")
 
@@ -65,8 +78,13 @@ if __name__ == "__main__":
                 print(f"The file '{input_file_path}' is empty.")
             else:
                 print(f"\nProcessing URLs from '{input_file_path}'...")
-                outfile.write("URL | Title | Artist\n") # Write header to output file
-                outfile.write("---|---|---\n")
+
+                if output_format == "csv":
+                    outfile.write("URL,Title,Artist\n")
+                else:
+                    outfile.write("URL | Title | Artist\n") # Write header to output file
+                    outfile.write("---|---|---\n")
+
                 for url in urls:
                     url = url.strip()
                     if url:
@@ -76,10 +94,19 @@ if __name__ == "__main__":
                             print(f"  Song Title: {title}")
                             print(f"  Artist: {artist}")
                             # Write result to output file
-                            outfile.write(f"{url} | {title} | {artist}\n")
+
+                            if output_format == "csv":
+                                outfile.write(f"{url},{title},{artist}\n")
+                            else:
+                                outfile.write(f"{url} | {title} | {artist}\n")
                         else:
-                            print("  Could not extract song information for this URL.")
-                            outfile.write(f"{url} | Error | Could not extract info\n") # Log errors too
+                            print("Could not extract song information for this URL.")
+
+                            # Write error to output file
+                            if output_format == "csv":
+                                outfile.write(f"{url},Error,Could not extract info\n")
+                            else:
+                                outfile.write(f"{url} | Error | Could not extract info\n") # Log errors too
 
                 print(f"\nResults saved to: {output_file_path}") # Inform user about output file
 
